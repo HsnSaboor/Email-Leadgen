@@ -2,8 +2,7 @@
 
 # Playwright stealth mode configuration
 STEALTH_CONFIG = {
-    "headless": True,
-    "stealth": True
+    "headless": True
 }
 
 # Output filenames
