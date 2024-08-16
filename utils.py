@@ -1,12 +1,15 @@
 # utils.py
+import csv
 
-import pandas as pd
-
-def save_to_csv(data, filename):
-    df = pd.DataFrame(data)
-    df.to_csv(filename, index=False)
-
-def classify_urls(urls):
-    google_maps_urls = [url for url in urls if "google.com/maps" in url]
-    yellowpages_urls = [url for url in urls if "yellowpages.com" in url]
-    return google_maps_urls, yellowpages_urls
+def save_results_to_csv(results, filename):
+    with open(filename, 'w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(['Name', 'Website', 'Phone', 'Email', 'Address'])
+        for entry in results:
+            writer.writerow([
+                entry.get('name', 'N/A'),
+                entry.get('website', 'N/A'),
+                ', '.join(entry.get('phone', [])),
+                ', '.join(entry.get('email', [])),
+                entry.get('address', 'N/A')
+            ])
