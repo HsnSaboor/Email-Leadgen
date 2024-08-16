@@ -1,64 +1,29 @@
-# app.py
 import streamlit as st
-from google_maps_scraper import scrape_google_maps
-from yellowpages_scraper import scrape_yellowpages
-from email_scraper import scrape_emails_from_page
-from phone_scraper import scrape_phone_numbers_from_page
-from address_scraper import scrape_address_from_page
-from utils import save_results_to_csv
-from config import GOOGLE_MAPS_DOMAIN, YELLOWPAGES_DOMAIN
+from scraper import scrape_google_maps, scrape_yellowpages, scrape_emails_from_websites
+import os
 
-def process_links(links):
-    google_maps_results = []
-    yellowpages_results = []
+st.title("Lead Generation Scraper")
+st.write("Scrape phone numbers, websites, emails, and more from Google Maps and Yellow Pages.")
 
-    for i, link in enumerate(links):
-        st.progress(i / len(links))
+# Sidebar input
+category = st.sidebar.text_input("Business Category", value="Yamaha Service Center")
+location = st.sidebar.text_input("Location", value="Trivandrum")
+number_of_items = st.sidebar.number_input("Number of Items", min_value=1, value=5)
+yellowpages_url = st.sidebar.text_input("Yellow Pages URL", value="https://www.yellowpages.com/search?search_terms=service+center&geo_location_terms=Trivandrum")
 
-        if GOOGLE_MAPS_DOMAIN in link:
-            try:
-                data = scrape_google_maps(link)
-                data.update({
-                    'phone': scrape_phone_numbers_from_page(link),
-                    'email': scrape_emails_from_page(link),
-                    'address': scrape_address_from_page(link)
-                })
-                google_maps_results.append(data)
-            except Exception as e:
-                st.error(f"Failed to process Google Maps link: {link}. Error: {e}")
-        elif YELLOWPAGES_DOMAIN in link:
-            try:
-                data = scrape_yellowpages(link)
-                data.update({
-                    'phone': scrape_phone_numbers_from_page(link),
-                    'email': scrape_emails_from_page(link),
-                    'address': scrape_address_from_page(link)
-                })
-                yellowpages_results.append(data)
-            except Exception as e:
-                st.error(f"Failed to process Yellow Pages link: {link}. Error: {e}")
-        else:
-            st.warning(f"Unknown domain in link: {link}")
+# Scrape Google Maps
+if st.button("Scrape Google Maps"):
+    scrape_google_maps(category, location, number_of_items)
+    st.success(f"Scraped Google Maps for {category} in {location}. Check the output folder.")
 
-    return google_maps_results, yellowpages_results
+# Scrape Yellow Pages
+if st.button("Scrape Yellow Pages"):
+    scrape_yellowpages(yellowpages_url)
+    st.success(f"Scraped Yellow Pages from {yellowpages_url}. Check the output folder.")
 
-def main():
-    st.title("Bulk Lead Generation Scraper")
-
-    input_urls = st.text_area("Enter URLs (comma-separated):", height=200)
-    links = [url.strip() for url in input_urls.split(',') if url.strip()]
-
-    if st.button("Start Scraping"):
-        st.info("Starting the scraping process...")
-        google_maps_results, yellowpages_results = process_links(links)
-
-        if google_maps_results:
-            save_results_to_csv(google_maps_results, 'maps.csv')
-            st.success("Google Maps data saved to maps.csv")
-
-        if yellowpages_results:
-            save_results_to_csv(yellowpages_results, 'yellowpages.csv')
-            st.success("Yellow Pages data saved to yellowpages.csv")
-
-if __name__ == "__main__":
-    main()
+# Scrape Emails from Websites
+uploaded_file = st.file_uploader("Upload CSV with Website URLs", type=["csv"])
+if uploaded_file and st.button("Scrape Emails"):
+    emails = scrape_emails_from_websites(uploaded_file)
+    st.json(emails)
+    st.success("Scraped emails from websites.")
